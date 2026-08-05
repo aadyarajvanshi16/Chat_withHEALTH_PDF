@@ -126,10 +126,10 @@ def build_chain(vectorstore, api_key, prompt_template):
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if uploaded_file and not google_api_key:
+if uploaded_file and not GOOGLE_API_KEY:
     st.warning("Please enter your Google API key in the sidebar to continue.")
 
-if uploaded_file and google_api_key:
+if uploaded_file and GOOGLE_API_KEY:
     with st.spinner("Reading and indexing your report..."):
         vectorstore = build_vectorstore(uploaded_file)
 
@@ -138,7 +138,7 @@ if uploaded_file and google_api_key:
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("📋 Get a quick plain-language summary", use_container_width=True):
-            summary_chain = build_chain(vectorstore, google_api_key, SUMMARY_PROMPT)
+            summary_chain = build_chain(vectorstore, GOOGLE_API_KEY, SUMMARY_PROMPT)
             with st.spinner("Summarizing report..."):
                 summary = summary_chain.invoke("Summarize this report.")
             st.session_state.messages.append({"role": "assistant", "content": summary})
@@ -154,7 +154,7 @@ if uploaded_file and google_api_key:
         with st.chat_message("user"):
             st.markdown(question)
 
-        qa_chain = build_chain(vectorstore, google_api_key, QA_PROMPT)
+        qa_chain = build_chain(vectorstore, GOOGLE_API_KEY, QA_PROMPT)
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 answer = qa_chain.invoke(question)
