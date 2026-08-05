@@ -26,9 +26,12 @@ st.caption("Upload a lab report or prescription and ask questions in plain Engli
 # ============ STEP 3: API KEYS & LOAD PDF =================
 
 with st.sidebar:
-    st.header("Setup")
+    st.header("USER DETAILS")
+    st.divider()
+    st.header("Enter your API Key: ")
     GOOGLE_API_KEY = st.text_input("google_api_key", type="password",
                                   help="Get a free key at console.groq.com")
+    st.header("Upload your file")
     uploaded_file = st.file_uploader("Upload medical report (PDF)", type=["pdf"])
     st.divider()
     st.markdown(
