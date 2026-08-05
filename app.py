@@ -1,0 +1,164 @@
+# =============STEP 1: LOAD MODULES===============
+import os
+from pypdf import PdfReader
+from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.prompts import PromptTemplate
+import streamlit as st
+import numpy
+import time
+from PIL import Image
+from dotenv import load_dotenv
+
+# ============= STEP 2: PAGE CONFIGURATION ===============
+
+st.set_page_config(page_title="Chat with Medical Reports", page_icon="🩺", layout="wide")
+st.title("🩺 Chat with Medical Reports (PDF)")
+st.caption("Upload a lab report or prescription and ask questions in plain English.")
+
+# ============ STEP 3: API KEYS & LOAD PDF =================
+
+with st.sidebar:
+    st.header("Setup")
+    GOOGLE_API_KEY = st.text_input("google_api_key", type="password",
+                                  help="Get a free key at console.groq.com")
+    uploaded_file = st.file_uploader("Upload medical report (PDF)", type=["pdf"])
+    st.divider()
+    st.markdown(
+        """⚠️ **Disclaimer:** This tool explains report content in plain 
+        language for educational purposes only. It is **not** a medical 
+        diagnosis. Always consult a qualified doctor."""
+    )
+
+# ============ HEALTH SYSTEM PROMPT ==============
+
+MEDICAL_PROMPT = """You are a careful medical-report explainer assistant.
+You help patients understand their lab reports and prescriptions in simple,
+plain language. You are NOT a doctor and must never provide a diagnosis or
+tell the user to start/stop/change any medication or treatment.
+
+Rules you must always follow:
+1. Base your answer ONLY on the provided report context. If the answer isn't
+   in the context, SAY "I don't have such kind of knowledge".
+2. When explaining a lab value, mention: what the test measures, the
+   patient's value (if present), the normal/reference range (if present),
+   and whether it appears high, low, or normal — in plain, non-technical
+   language a layperson can understand.
+3. Avoid medical jargon; if you must use a technical term, explain it in
+   parentheses.
+4. Never give a diagnosis, prognosis, or specific treatment/dosage advice.
+   Instead, gently suggest the person discuss the finding with their doctor.
+5. Keep tone calm and reassuring — avoid alarming language even for
+   abnormal values.
+6. End every answer with a short one-line reminder to consult a healthcare
+   professional, EXCEPT for simple factual lookups (e.g. "what is my
+   hemoglobin value") where it isn't needed.
+
+Context from the uploaded report:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+QA_PROMPT = PromptTemplate(
+    template = QA_TEMPLATE,
+    input_variables = ["context", "question"],
+)
+
+SUMMARY_TEMPLATE = MEDICAL_PROMPT + """
+
+Give a short, plain-language summary of this report: what tests were done,
+which values (if any) are outside the normal range, and what that might
+generally mean. Keep it under 200 words.
+
+Answer:"""
+
+SUMMARY_PROMPT = PromptTemplate(
+    template = SUMMARY_TEMPLATE,
+    input_variables = ["context"],
+)
+
+
+def format_docs(docs):
+    return "\n\n".join(d.page_content for d in docs)
+
+# =============== RAG PIPELINE =====================
+
+@st.cache_resource(show_spinner=False)
+def build_vectorstore(pdf_file):
+  reader = PdfReader(pdf_file)
+  pages = []
+  for i, page in enumerate(reader.pages):
+    text = page.extract_text() or ""
+    pages.append(Document(page_content = text, metadata = {"page":i}))
+    
+  splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
+  chunks = splitter.split_documents(pages)
+
+  embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+  vectorstore = FAISS.from_documents(chunks, embeddings)
+  return vectorstore
+
+
+def build_chain(vectorstore, api_key, prompt_template):
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+    llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash",
+                                 google_api_key=api_key)
+
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt_template
+        | llm
+        | StrOutputParser()
+    )
+    return rag_chain
+
+# ============ MAIN APP ===============
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if uploaded_file and not google_api_key:
+    st.warning("Please enter your Google API key in the sidebar to continue.")
+
+if uploaded_file and google_api_key:
+    with st.spinner("Reading and indexing your report..."):
+        vectorstore = build_vectorstore(uploaded_file)
+
+    st.success(f"'{uploaded_file.name}' processed successfully. Ask away!")
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("📋 Get a quick plain-language summary", use_container_width=True):
+            summary_chain = build_chain(vectorstore, google_api_key, SUMMARY_PROMPT)
+            with st.spinner("Summarizing report..."):
+                summary = summary_chain.invoke("Summarize this report.")
+            st.session_state.messages.append({"role": "assistant", "content": summary})
+
+    # Display chat history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # Chat input
+    if question := st.chat_input("Ask a question about your report..."):
+        st.session_state.messages.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+
+        qa_chain = build_chain(vectorstore, google_api_key, QA_PROMPT)
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                answer = qa_chain.invoke(question)
+                st.markdown(answer)
+        st.session_state.messages.append({"role": "assistant", "content": answer})
+
+elif not uploaded_file:
+    st.info("👈 Upload a PDF lab report or prescription in the sidebar to get started.")
