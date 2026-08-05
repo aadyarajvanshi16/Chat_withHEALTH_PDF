@@ -62,7 +62,8 @@ Rules you must always follow:
    hemoglobin value") where it isn't needed.
 
 Context from the uploaded report:
-{context}
+{context}"""
+QA_TEMPLATE = MEDICAL_SYSTEM_PROMPT + """
 
 Question: {question}
 
