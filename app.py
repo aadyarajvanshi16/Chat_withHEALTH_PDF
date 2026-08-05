@@ -63,7 +63,7 @@ Rules you must always follow:
 
 Context from the uploaded report:
 {context}"""
-QA_TEMPLATE = MEDICAL_SYSTEM_PROMPT + """
+QA_TEMPLATE = MEDICAL_PROMPT + """
 
 Question: {question}
 
