@@ -38,6 +38,7 @@ st.markdown(
         background-color: #0a2d5c;
         color: #ffffff;
     }
+    [data-testid="stFileUploaderDropzone"] { background-color: #0a2d5c; }
     </style>
     """,
     unsafe_allow_html=True,
