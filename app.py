@@ -23,6 +23,26 @@ st.set_page_config(page_title="Chat with Medical Reports", page_icon="🩺", lay
 st.title("🩺 Chat with Medical Reports (PDF)")
 st.caption("Upload a lab report or prescription and ask questions in plain English.")
 
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background-color: #001f3f;
+    }
+    /* Make sidebar text white so it stays readable on navy blue */
+    [data-testid="stSidebar"] * {
+        color: #ffffff;
+    }
+    /* Style the text input box so it doesn't stay white-on-white */
+    [data-testid="stSidebar"] input {
+        background-color: #0a2d5c;
+        color: #ffffff;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ============ STEP 3: API KEYS & LOAD PDF =================
 
 with st.sidebar:
