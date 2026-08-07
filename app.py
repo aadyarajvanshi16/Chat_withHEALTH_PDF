@@ -39,6 +39,9 @@ st.markdown(
         color: #ffffff;
     }
     [data-testid="stFileUploaderDropzone"] { background-color: #0a2d5c; }
+     [data-testid="stSidebar"] hr {
+        border-color: #ffffff;
+    }
     </style>
     """,
     unsafe_allow_html=True,
