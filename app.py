@@ -52,7 +52,7 @@ with st.sidebar:
     GOOGLE_API_KEY = st.text_input("google_api_key", type="password",
                                   help="Get a free key at console.groq.com")
     st.header("Upload your file")
-    uploaded_file = st.file_uploader("Upload medical report (PDF)", type=["pdf"])
+    uploaded_file = st.file_uploader("Upload medical report (PDF)", type=["pdf"], color = "black")
     st.divider()
     st.markdown(
         """⚠️ **Disclaimer:** This tool explains report content in plain 
