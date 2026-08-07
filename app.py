@@ -51,7 +51,7 @@ with st.sidebar:
     st.divider()
     st.header("Enter your API Key: ")
     GOOGLE_API_KEY = st.text_input("google_api_key", type="password",
-                                  help="Get a free key at console.groq.com")
+                                  help="Get a free key at aistudio.google.com/app/apikey")
     st.header("Upload your file")
     uploaded_file = st.file_uploader("Upload medical report (PDF)", type=["pdf"])
     st.divider()
