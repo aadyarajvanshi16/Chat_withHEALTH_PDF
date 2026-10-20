@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 # ============= STEP 2: PAGE CONFIGURATION ===============
 
 st.set_page_config(page_title="Chat with Medical Reports", page_icon="🩺", layout="wide")
-st.title("🩺 Chat with Medical Reports (PDF)")
+st.title("🩺 Chat with Medical Reports")
 st.caption("Upload a lab report or prescription and ask questions in plain English.")
 
 st.markdown(
