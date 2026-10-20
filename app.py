@@ -203,6 +203,32 @@ if uploaded_file and GOOGLE_API_KEY:
         vectorstore = build_vectorstore(uploaded_file, google_api_key)
     st.success(f"'{uploaded_file.name}' processed successfully. Ask away!")
 
+    GUIDE_TEMPLATE = """Based on this medical report, suggest 1 to 3 types of doctors/specialists
+the person should consider consulting (e.g. General Physician, Endocrinologist) and
+give a one-line reason for each. Do NOT diagnose or name diseases as certain.
+
+Report content:
+{context}
+
+Suggestions:"""
+
+st.session_state["vectorstore"] = vectorstore
+st.session_state["google_api_key"] = google_api_key
+
+if st.session_state.get("guidance_for") != uploaded_file.name:
+    docs = vectorstore.as_retriever(search_kwargs={"k": 6}).invoke(
+        "abnormal values, diagnosis, medicines, doctor remarks")
+    guide_chain = (
+        PromptTemplate.from_template(GUIDE_TEMPLATE)
+        | ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=google_api_key, temperature=0.2)
+        | StrOutputParser()
+    )
+    st.session_state["guidance"] = guide_chain.invoke({"context": format_docs(docs)})
+    st.session_state["guidance_for"] = uploaded_file.name
+
+st.info("🩺 **Suggested specialists**\n\n" + st.session_state["guidance"])
+st.success("👉 Open the **Find Doctors** page from the sidebar to see doctors and hospitals near you.")
+
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("📋 Get a quick plain-language summary", use_container_width=True):
