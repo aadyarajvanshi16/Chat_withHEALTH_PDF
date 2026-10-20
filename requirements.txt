@@ -8,3 +8,6 @@ langchain-huggingface
 faiss-cpu
 pypdf
 sentence-transformers
+python-docx
+pandas
+openpyxl
