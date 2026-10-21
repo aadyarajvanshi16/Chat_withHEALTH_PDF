@@ -41,7 +41,7 @@ FEATURES = [
     ("🩺", "Report Reader",
      "Upload a lab report or prescription (PDF, Word, image, Excel...) and chat with it. "
      "Get plain-language explanations of your values.",
-     "pages/report_reader.py"),
+     "pages/Report_reader.py"),
     ("🤒", "Symptom Checker",
      "Describe what you are feeling and get common possible causes, self-care tips, "
      "and clear signs of when to see a doctor.",
