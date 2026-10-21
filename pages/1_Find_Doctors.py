@@ -232,8 +232,4 @@ if saved:
                     st.link_button("🗺️ Open in Maps",
                                    f"https://www.google.com/maps/search/?api=1&query={maps_q}")
 
-    with st.expander("🔧 See what the agent did"):
-        for s in saved["steps"]:
-            st.write(s)
-
 st.caption("⚠️ This is guidance only, not medical advice. Always confirm with the doctor or hospital directly.")
